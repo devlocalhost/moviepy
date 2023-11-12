@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+
+import sys
+import re
+
+import requests
+from bs4 import BeautifulSoup
+
+del sys.argv[0]
+
+CONVERSION_TYPE = 1024
+links = [
+    "https://edytjedhgmdhm.abfhaqrhbnf.workers.dev",
+    "https://odd-bird-1319.zwuhygoaqe.workers.dev",
+]
+categories = ["misc", "movies", "tvs", "files"]
+
+if len(sys.argv) == 0:
+    sys.exit(
+        "moviepy - find high quality direct link movies easily\n a wrapper for https://edytjedhgmdhm.abfhaqrhbnf.workers.dev\n and https://odd-bird-1319.zwuhygoaqe.workers.dev,\n which can be painful to use with a web browser\n\n   Usage: moviepy CATEGORY SEARCH\n          moviepy CATEGORY CATEGORY2 CODE\n\nExamples: moviepy movies \"Yes man\"                      (CATEGORY SEARCH)\n          moviepy tvs \"better call\"                     (CATEGORY SEARCH)\n          moviepy files movies \"Yes%20Man%20%282008%29\" (CATEGORY CATEGORY2 CODE)"
+    )
+
+
+def make_req(url):
+    return requests.get(url, timeout=10)
+
+
+def make_req_working(url_rest):
+    print("Trying with website 1...")
+
+    req = make_req(f"{links[0]}/{url_rest}")
+
+    if req.status_code == 429:
+        print(f" Err, got {req.status_code}")
+        print("Trying with website 2...")
+
+        req = make_req(f"{links[1]}/{url_rest}")
+
+        if req.status_code != 200:
+            sys.exit(f" Website returned code {req.status_code}\n  Resp: {req.text}")
+
+    return req
+
+
+def convert_bytes(fsize, units=(" bytes", " KiB", " MiB", " GiB", " TiB")):
+    """convert bytes to human readable format"""
+
+    for unit in units:
+        if fsize < CONVERSION_TYPE:
+            return f"{fsize:.2f}{unit if CONVERSION_TYPE == 1024 else unit.replace('i', '')}"
+
+        fsize /= CONVERSION_TYPE
+
+    return f"{fsize:.2f} {units[-1]}"
+
+
+category = sys.argv[0]
+
+if len(sys.argv) != 2 and category != "files":
+    sys.exit("Missing arguments or too many arguments")
+
+if category not in categories:
+    sys.exit(
+        f"Invalid category \"{category}\". valid categories: {', '.join(categories)}"
+    )
+
+if category == "files":
+    file_category = sys.argv[1]
+    code = sys.argv[2]
+    req = make_req_working(f"{file_category}/{code}/")
+
+    print(" Got data, parsing...")
+
+    soup = BeautifulSoup(req.text, "html.parser")
+    result = soup.find_all("tr", {"class": "file"})
+
+    print(f"  Listing files for {requests.utils.unquote(code)}...")
+
+    for file in result:
+        file_name = requests.utils.unquote(file.find("span").find("a").get("href"))
+        file_link = f"{links[1]}/{file_category}/{code}/{file_name}"
+        file_size = convert_bytes(int(file.find("size").contents[0]))
+
+        print(f"   [{file_size:<13}] {file_name}: {file_link}")
+
+    sys.exit()
+
+
+search = sys.argv[1]
+
+print(f"Searching for {search} in {category}...")
+
+req = make_req_working(f"/{category}/")
+
+print(" Got data, parsing...")
+
+soup = BeautifulSoup(req.text, "html.parser")
+result = soup.find_all("span", {"class": "name"})
+
+for movie in result:
+    a_tag = movie.find("a")
+
+    name = a_tag.contents[0].rstrip("/")
+    link = a_tag.get("href").rstrip("/")
+
+    regex_result = re.findall(f".*{search}.*", name, re.IGNORECASE)
+
+    if regex_result:
+        print(f"  {name}, code: {link}")
+
+    # else:
+    # print(f" [xx] no result, got: {regex_result}")
