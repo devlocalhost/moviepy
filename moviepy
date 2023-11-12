@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+moviepy - find high quality direct link movies and tv series easily
+"""
+
 import sys
 import re
 
@@ -17,15 +21,19 @@ categories = ["misc", "movies", "tvs", "files"]
 
 if len(sys.argv) == 0:
     sys.exit(
-        "moviepy - find high quality direct link movies easily\n a wrapper for https://edytjedhgmdhm.abfhaqrhbnf.workers.dev\n and https://odd-bird-1319.zwuhygoaqe.workers.dev,\n which can be painful to use with a web browser\n\n   Usage: moviepy CATEGORY SEARCH\n          moviepy CATEGORY CATEGORY2 CODE\n\nExamples: moviepy movies \"Yes man\"                      (CATEGORY SEARCH)\n          moviepy tvs \"better call\"                     (CATEGORY SEARCH)\n          moviepy files movies \"Yes%20Man%20%282008%29\" (CATEGORY CATEGORY2 CODE)"
+        'moviepy - find high quality direct link movies easily\n a wrapper for https://edytjedhgmdhm.abfhaqrhbnf.workers.dev\n and https://odd-bird-1319.zwuhygoaqe.workers.dev,\n which can be painful to use with a web browser\n\n   Usage: moviepy CATEGORY SEARCH\n          moviepy CATEGORY CATEGORY2 CODE\n\nExamples: moviepy movies "Yes man"                      (CATEGORY SEARCH)\n          moviepy tvs "better call"                     (CATEGORY SEARCH)\n          moviepy files movies "Yes%20Man%20%282008%29" (CATEGORY CATEGORY2 CODE)'
     )
 
 
 def make_req(url):
+    """return response"""
+
     return requests.get(url, timeout=10)
 
 
 def make_req_working(url_rest):
+    """return a working response, since website 1 might be down"""
+
     print("Trying with website 1...")
 
     req = make_req(f"{links[0]}/{url_rest}")
@@ -65,6 +73,8 @@ if category not in categories:
     )
 
 if category == "files":
+    # TODO: This does not work with tvs/
+
     file_category = sys.argv[1]
     code = sys.argv[2]
     req = make_req_working(f"{file_category}/{code}/")
