@@ -1,5 +1,5 @@
 # moviepy
-moviepy - find high quality direct link movies easily
+moviepy - find high quality direct link movies and tv series easily
 
 a wrapper for https://edytjedhgmdhm.abfhaqrhbnf.workers.dev and https://odd-bird-1319.zwuhygoaqe.workers.dev, which can be painful to use with a web browser
 
