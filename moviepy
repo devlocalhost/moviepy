@@ -8,7 +8,7 @@ import sys
 import re
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 
 del sys.argv[0]
 
@@ -18,6 +18,10 @@ links = [
     "https://odd-bird-1319.zwuhygoaqe.workers.dev",
 ]
 categories = ["misc", "movies", "tvs", "files"]
+
+# https://stackoverflow.com/a/36384957
+only_tr = SoupStrainer("tr")
+only_span = SoupStrainer("span")
 
 if len(sys.argv) == 0:
     sys.exit(
@@ -81,7 +85,7 @@ if category == "files":
 
     print(" Got data, parsing...")
 
-    soup = BeautifulSoup(req.text, "html.parser")
+    soup = BeautifulSoup(req.text, "html.parser", parse_only=only_tr)
     result = soup.find_all("tr", {"class": "file"})
 
     print(f"  Listing files for {requests.utils.unquote(code)}...")
@@ -104,7 +108,7 @@ req = make_req_working(f"/{category}/")
 
 print(" Got data, parsing...")
 
-soup = BeautifulSoup(req.text, "html.parser")
+soup = BeautifulSoup(req.text, "html.parser", parse_only=only_span)
 result = soup.find_all("span", {"class": "name"})
 
 for movie in result:
